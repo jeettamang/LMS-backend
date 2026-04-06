@@ -1,0 +1,26 @@
+import mongoose, { Schema } from "mongoose";
+
+const contactSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    purpose: {
+      type: String,
+      enum: ["course-inquiry", "admission", "technical-support", "other"],
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+    },
+  },
+  { timestamps: true },
+);
+
+export const ContactModel = mongoose.model("Contact", contactSchema);
