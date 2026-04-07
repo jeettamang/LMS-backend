@@ -10,6 +10,7 @@ import instructorRoutes from "./src/routes/instructorRoute.js";
 import contactRoutes from "./src/routes/contactRoute.js";
 import blogRoutes from "./src/routes/blogRoute.js";
 import enrollRoutes from "./src/routes/enrollmentRoute.js";
+import courseCategoryRoutes from "./src/routes/courseCategoryRoute.js";
 dotenv.config();
 const app = express();
 
@@ -42,6 +43,7 @@ app.use("/api/v1/instructor", instructorRoutes);
 app.use("/api/v1/contact", contactRoutes);
 app.use("/api/v1/blogs", blogRoutes);
 app.use("/api/v1/enrollment", enrollRoutes);
+app.use("/api/v1/course-category", courseCategoryRoutes);
 connectDB();
 
 const PORT = Number(process.env.PORT) || 8000;

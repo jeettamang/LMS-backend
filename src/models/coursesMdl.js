@@ -2,33 +2,23 @@ import mongoose, { Schema } from "mongoose";
 
 const courseSchema = new Schema(
   {
-    title: {
-      type: String,
-      required: true,
-    },
-    description: {
-      type: String,
-    },
-    image: {
-      type: String,
-      required: true,
-    },
-    price: {
-      type: Number,
-      default: 1,
-    },
-    duration: {
-      type: String,
+    title: { type: String, required: true },
+    slug: { type: String, lowercase: true, unique: true },
+    description: { type: String },
+    image: { type: String, required: true },
+    price: { type: Number, default: 1 },
+    videoUrl: { type: String },
+    duration: { type: String, required: true },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CourseCategory",
       required: true,
     },
     instructor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Instructor",
     },
-    rating: {
-      type: Number,
-      default: 0,
-    },
+    rating: { type: Number, default: 0 },
     reviews: [
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

@@ -2,6 +2,7 @@ import path from "path";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { CourseModel } from "../models/coursesMdl.js";
 import { InstructorModel } from "../models/instructorModel.js";
+import { generateSlug } from "../utils/slug.js";
 
 const createCourse = async (req, res) => {
   try {
@@ -10,6 +11,8 @@ const createCourse = async (req, res) => {
       description,
       price,
       duration,
+      videoUrl,
+      category,
       instructor: instructorFromBody,
     } = req.body;
 
@@ -23,7 +26,7 @@ const createCourse = async (req, res) => {
       return res.status(404).json({ message: "Selected instructor not found" });
     }
 
-    if (!title || !description || !price || !duration || !instructorId) {
+    if (!title || !description || !price || !duration || !category || !instructorId) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -44,6 +47,9 @@ const createCourse = async (req, res) => {
       description,
       price: +price,
       duration,
+      category,
+      slug:generateSlug(title),
+      videoUrl,
       instructor: instructorId,
       image: imageUrl,
     });
@@ -62,17 +68,29 @@ const createCourse = async (req, res) => {
 
 const getCourses = async (req, res) => {
   try {
-    const courses = await CourseModel.find().populate(
-      "instructor",
-      "-password -token",
-    );
+    const { search, category } = req.query;
+    let query = {};
+    if (search) {
+      query.title = { $regex: search, $options: "i" };
+    }
+    if (category && category !== "All Categories") {
+      query.category = category;
+    }
+    const courses = await CourseModel.find(query)
+      .populate("instructor", "name profileImage specialization bio") 
+      .populate("category", "name slug") 
+      .sort({ createdAt: -1 }); 
+
     res.status(200).json({
-      message: "Course fetched successfully",
+      success: true,
+      message: "Courses fetched successfully",
+      count: courses.length,
       course: courses,
     });
   } catch (error) {
     return res.status(500).json({
-      message: "Internal server error during of fetching of courses",
+      success: false,
+      message: "Internal server error during fetching of courses",
       err: error.message,
     });
   }
@@ -83,7 +101,7 @@ const getCourseById = async (req, res) => {
     const { id } = req.params;
     const course = await CourseModel.findById(id).populate(
       "instructor",
-      "name bio experience profileImage",
+      "name bio experience profileImage videoUrl",
     );
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
