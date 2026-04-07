@@ -59,7 +59,6 @@ const createEnrollment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 const verifyEsewaPayment = async (req, res) => {
   try {
     const { data } = req.query;
@@ -75,7 +74,6 @@ const verifyEsewaPayment = async (req, res) => {
     enrollment.status = "paid";
     await enrollment.save();
 
-    // Redirect to the LIVE success page
     return res.redirect("http://localhost:5173/payment-success");
   } catch (error) {
     console.error("Verify error:", error);
@@ -101,7 +99,6 @@ const getEnrollments = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 const getEnrollmentById = async (req, res) => {
   try {
     const enrollment = await EnrollModel.findById(req.params.id).populate(
@@ -117,7 +114,6 @@ const getEnrollmentById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 const deleteEnrollment = async (req, res) => {
   try {
     const enrollment = await EnrollModel.findByIdAndDelete(req.params.id);
@@ -131,7 +127,6 @@ const deleteEnrollment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 const getUserDashboard = async (req, res) => {
   try {
     const userId = req.user.id;

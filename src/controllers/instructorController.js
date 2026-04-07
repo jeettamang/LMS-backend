@@ -3,6 +3,7 @@ import path from "path";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { comparePass, generateToken, hashedPass } from "../utils/bcrypt.js";
 import { CourseModel } from "../models/coursesMdl.js";
+import { EnrollModel } from "../models/EnrollmentModel.js";
 
 const createInstructor = async (req, res) => {
   console.log("Instructor:", req.body);
@@ -85,6 +86,20 @@ const getInstructors = async (req, res) => {
     });
   }
 };
+const getInstructorPublically = async (req, res) => {
+  try {
+    const publicInstructors = await InstructorModel.find().select(
+      "name specialization profileImage",
+    );
+    res
+      .status(200)
+      .json({ message: "Instructors for public", publicInstructors });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to get instructors for public", error });
+  }
+};
 const getMe = async (req, res) => {
   try {
     const id = req.user.id || req.user._id;
@@ -122,6 +137,77 @@ const getMyCourses = async (req, res) => {
       message: "Error fetching courses",
       error: err.message,
     });
+  }
+};
+const getMyStudents = async (req, res) => {
+  try {
+    const instructorId = req.user._id || req.user.id;
+    const enrollments = await EnrollModel.find({ status: "paid" })
+      .populate({
+        path: "course",
+        select: "title instructor",
+        match: { instructor: instructorId },
+      })
+      .populate("user", "name email profileImage")
+      .sort({ createdAt: -1 });
+
+    const filteredEnrollments = enrollments.filter(
+      (enrollment) => enrollment.course !== null,
+    );
+
+    res.status(200).json({
+      success: true,
+      count: filteredEnrollments.length,
+      students: filteredEnrollments,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching student list",
+      error: error.message,
+    });
+  }
+};
+const getInstructorDashboard = async (req, res) => {
+  try {
+    const instructorId = req.user.id || req.user._id;
+
+    const instructorCourses = await CourseModel.find({
+      instructor: instructorId,
+    });
+    const courseIds = instructorCourses.map((course) => course._id);
+
+    const allEnrollments = await EnrollModel.find({
+      course: { $in: courseIds },
+    })
+      .populate("user", "name email")
+      .populate("course", "title price")
+      .sort({ createdAt: -1 });
+    const totalCourses = instructorCourses.length;
+
+    const paidEnrollments = allEnrollments.filter((e) => e.status === "paid");
+    const totalStudents = new Set(
+      paidEnrollments.map((e) => e.user?._id.toString()),
+    ).size;
+
+    const totalEarnings = paidEnrollments.reduce(
+      (sum, e) => sum + (e.amount || 0),
+      0,
+    );
+
+    const pendingRequests = allEnrollments.filter(
+      (e) => e.status === "pending",
+    ).length;
+
+    res.status(200).json({
+      totalCourses,
+      totalStudents,
+      totalEarnings,
+      pendingRequests,
+      recentActivity: allEnrollments.slice(0, 5),
+    });
+  } catch (error) {
+    console.error("Instructor Dashboard Error:", error);
+    res.status(500).json({ message: "Failed to load instructor stats" });
   }
 };
 const loginInstructor = async (req, res) => {
@@ -258,8 +344,11 @@ const deleteIns = async (req, res) => {
 export {
   createInstructor,
   loginInstructor,
+  getInstructorPublically,
   getMe,
   getMyCourses,
+  getMyStudents,
+  getInstructorDashboard,
   updateInstructor,
   deleteIns,
   getInstructors,
