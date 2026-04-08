@@ -64,8 +64,8 @@ const verifyEsewaPayment = async (req, res) => {
       ? "https://lms-frontend-jade-xi.vercel.app"
       : "http://localhost:5173";
 
-    const successPath = isProd ? "/success" : "/payment-success";
-    const failurePath = isProd ? "/failure" : "/payment-failure";
+    const successPath = isProd ? "/payment-success" : "/payment-success";
+    const failurePath = isProd ? "/payment-failure" : "/payment-failure";
 
     const enrollment = await EnrollModel.findOne({ transaction_uuid });
 
