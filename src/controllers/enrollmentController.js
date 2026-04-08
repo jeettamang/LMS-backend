@@ -9,26 +9,20 @@ const createEnrollment = async (req, res) => {
     const { address, phone, course } = req.body;
 
     const courseData = await CourseModel.findById(course);
-    if (!courseData) {
+    if (!courseData)
       return res.status(404).json({ message: "Course not found" });
-    }
 
     const existing = await EnrollModel.findOne({
       user: userId,
       course,
       status: "paid",
     });
-
-    if (existing) {
-      return res
-        .status(400)
-        .json({ message: "You already enrolled in this course" });
-    }
+    if (existing) return res.status(400).json({ message: "Already enrolled" });
 
     const transaction_uuid = uuidv4();
-    const amount = courseData.price;
+    const amount = String(courseData.price);
     const product_code = "EPAYTEST";
-    const secretKey = process.env.SECRET_KEY;
+    const secretKey = process.env.SECRET_KEY || "8gBm/:&EnhH.1/q";
 
     const signatureMessage = `total_amount=${amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
     const signature = crypto
@@ -55,7 +49,6 @@ const createEnrollment = async (req, res) => {
       enrollment,
     });
   } catch (error) {
-    console.error("Create enrollment error:", error);
     res.status(500).json({ message: error.message });
   }
 };
