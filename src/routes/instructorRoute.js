@@ -28,7 +28,11 @@ instructorRouter
   .get("/get-me", authMiddleware(["Admin", "Instructor"]), getMe)
   .get("/my-courses", authMiddleware(["Instructor"]), getMyCourses)
   .get("/my-students", authMiddleware(["Instructor"]), getMyStudents)
-  .get("/my-dashboard", authMiddleware(["Instructor"]), getInstructorDashboard)
+  .get(
+    "/my-dashboard",
+    authMiddleware(["Instructor", "instructor"]),
+    getInstructorDashboard,
+  )
   .put(
     "/update/:id",
     upload.single("profileImage"),
