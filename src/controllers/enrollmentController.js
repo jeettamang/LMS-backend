@@ -28,7 +28,7 @@ const createEnrollment = async (req, res) => {
     const transaction_uuid = uuidv4();
     const amount = courseData.price;
     const product_code = "EPAYTEST";
-    const secretKey = "8gBm/:&EnhH.1/q"; // Move to .env for production
+    const secretKey = process.env.SECRET_KEY;
 
     const signatureMessage = `total_amount=${amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
     const signature = crypto
