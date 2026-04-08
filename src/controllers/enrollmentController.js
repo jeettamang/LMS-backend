@@ -65,19 +65,35 @@ const verifyEsewaPayment = async (req, res) => {
     const decoded = JSON.parse(Buffer.from(data, "base64").toString("utf-8"));
     const transaction_uuid = decoded.transaction_uuid;
 
+    const isProd = process.env.NODE_ENV === "production";
+
+    const frontendURL = isProd
+      ? "https://lms-frontend-jade-xi.vercel.app"
+      : "http://localhost:5173";
+
+    const successPath = isProd ? "/success" : "/payment-success";
+    const failurePath = isProd ? "/failure" : "/payment-failure";
+
     const enrollment = await EnrollModel.findOne({ transaction_uuid });
 
-    if (!enrollment) {
-      return res.redirect("http://localhost:5173/payment-failure");
+    if (!enrollment || decoded.status !== "COMPLETE") {
+      return res.redirect(`${frontendURL}${failurePath}`);
     }
 
+    // Success logic
     enrollment.status = "paid";
     await enrollment.save();
 
-    return res.redirect("http://localhost:5173/payment-success");
+    return res.redirect(`${frontendURL}${successPath}`);
   } catch (error) {
     console.error("Verify error:", error);
-    return res.redirect("http://localhost:5173/payment-failure");
+    const isProd = process.env.NODE_ENV === "production";
+    const frontendURL = isProd
+      ? "https://lms-frontend-jade-xi.vercel.app"
+      : "http://localhost:5173";
+    const failurePath = isProd ? "/failure" : "/payment-failure";
+
+    return res.redirect(`${frontendURL}${failurePath}`);
   }
 };
 const getEnrollments = async (req, res) => {
