@@ -77,7 +77,7 @@ const verifyEsewaPayment = async (req, res) => {
     enrollment.status = "paid";
     await enrollment.save();
 
-    return res.redirect(`${frontendURL}${successPath}`);
+    return res.redirect(`${frontendURL}${successPath}?tid=${transaction_uuid}`);
   } catch (error) {
     console.error("Verify error:", error);
     const isProd = process.env.NODE_ENV === "production";
@@ -87,6 +87,24 @@ const verifyEsewaPayment = async (req, res) => {
     const failurePath = isProd ? "/failure" : "/payment-failure";
 
     return res.redirect(`${frontendURL}${failurePath}`);
+  }
+};
+const getEnrollmentStatus = async (req, res) => {
+  try {
+    const { tid } = req.params;
+    const enrollment = await EnrollModel.findOne({ transaction_uuid: tid });
+    if (!enrollment) {
+      return res.status(404).json({
+        success: false,
+        message: "Enrollment not found",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      status: enrollment.status,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 const getEnrollments = async (req, res) => {
@@ -191,6 +209,7 @@ const getTotalEarnings = async (req, res) => {
 export {
   createEnrollment,
   verifyEsewaPayment,
+  getEnrollmentStatus,
   getEnrollmentById,
   getEnrollments,
   deleteEnrollment,

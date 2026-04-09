@@ -13,6 +13,9 @@ const createCourse = async (req, res) => {
       duration,
       videoUrl,
       category,
+      syllabus,
+      prerequisites,
+      enrollmentDeadline,
       instructor: instructorFromBody,
     } = req.body;
 
@@ -26,7 +29,14 @@ const createCourse = async (req, res) => {
       return res.status(404).json({ message: "Selected instructor not found" });
     }
 
-    if (!title || !description || !price || !duration || !category || !instructorId) {
+    if (
+      !title ||
+      !description ||
+      !price ||
+      !duration ||
+      !category ||
+      !instructorId
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -48,10 +58,16 @@ const createCourse = async (req, res) => {
       price: +price,
       duration,
       category,
-      slug:generateSlug(title),
+      slug: generateSlug(title),
       videoUrl,
       instructor: instructorId,
       image: imageUrl,
+      syllabus: typeof syllabus === "string" ? JSON.parse(syllabus) : syllabus,
+      prerequisites:
+        typeof prerequisites === "string"
+          ? JSON.parse(prerequisites)
+          : prerequisites,
+      enrollmentDeadline,
     });
 
     res.status(201).json({
@@ -77,9 +93,9 @@ const getCourses = async (req, res) => {
       query.category = category;
     }
     const courses = await CourseModel.find(query)
-      .populate("instructor", "name profileImage specialization bio") 
-      .populate("category", "name slug") 
-      .sort({ createdAt: -1 }); 
+      .populate("instructor", "name profileImage specialization bio")
+      .populate("category", "name slug")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -135,35 +151,60 @@ const deleteCourseById = async (req, res) => {
 const editCourse = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!id) {
-      return res.status(404).json({ message: "Course not found" });
-    }
-    const { title, description, price, duration, instructor } = req.body;
+    const {
+      title,
+      description,
+      price,
+      duration,
+      category,
+      videoUrl,
+      instructor,
+      syllabus,
+      prerequisites,
+      enrollmentDeadline,
+    } = req.body;
 
-    let updateImg = "";
-    if (req.file) {
-      const localPath = path.resolve(req.file.path);
-      const upload = await uploadOnCloudinary(localPath);
-      updateImg = upload?.secure_url;
-    }
     const updateData = {
       title,
       description,
       price,
       duration,
       instructor,
-      image: updateImg,
+      category,
+      videoUrl,
+      enrollmentDeadline,
     };
+    if (syllabus)
+      updateData.syllabus =
+        typeof syllabus === "string" ? JSON.parse(syllabus) : syllabus;
+    if (prerequisites)
+      updateData.prerequisites =
+        typeof prerequisites === "string"
+          ? JSON.parse(prerequisites)
+          : prerequisites;
+    if (req.file) {
+      const localPath = path.resolve(req.file.path);
+      const upload = await uploadOnCloudinary(localPath);
+
+      if (upload?.secure_url) {
+        updateData.image = upload.secure_url;
+      }
+    }
+
     const updatedCourse = await CourseModel.findByIdAndUpdate(
       id,
-      {
-        $set: updateData,
-      },
-      { new: true },
+      { $set: updateData },
+      { new: true, runValidators: true },
     );
-    res
-      .status(200)
-      .json({ message: "Course updated successfully", updatedCourse });
+
+    if (!updatedCourse) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    res.status(200).json({
+      message: "Course updated successfully",
+      updatedCourse,
+    });
   } catch (error) {
     res.status(500).json({
       message: "Error editing course",
