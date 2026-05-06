@@ -114,22 +114,44 @@ const getCourses = async (req, res) => {
 
 const getCourseById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // Course ID (String)
+    const userId = req.user?._id; // Tapaile bhannu bhayeko .id
+
     const course = await CourseModel.findById(id).populate(
       "instructor",
       "name bio experience profileImage videoUrl",
     );
+
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
-    res
-      .status(200)
-      .json({ message: "Course fetched successfully", courseDetail: course });
-  } catch (error) {
-    res.status(500).json({
-      message: "Error fetching course",
-      error: error.message,
+
+    let isEnrolled = false;
+
+    if (userId) {
+      // Direct search garda kahile kahi logic match hudaina
+      // EnrollModel ma status 'paid' bhayeko record khojne
+      const enrollment = await EnrollModel.findOne({
+        user: userId,
+        course: id,
+        status: "paid",
+      });
+
+      if (enrollment) {
+        isEnrolled = true;
+      }
+    }
+
+    // Response pathaunu bhanda agadi debug garnus
+    console.log("UserID:", userId, "CourseID:", id, "Found:", isEnrolled);
+
+    res.status(200).json({
+      message: "Course fetched successfully",
+      courseDetail: course,
+      isEnrolled: isEnrolled,
     });
+  } catch (error) {
+    res.status(500).json({ message: "Error", error: error.message });
   }
 };
 const deleteCourseById = async (req, res) => {

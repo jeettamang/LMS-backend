@@ -1,7 +1,6 @@
 import { ContactModel } from "../models/contactModel.js";
 import { mailSend } from "../utils/sendMail.js";
 const createContact = async (req, res) => {
-  console.log("message:", req.body);
   try {
     const { name, email, purpose, message } = req.body;
 

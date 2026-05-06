@@ -11,6 +11,8 @@ import contactRoutes from "./src/routes/contactRoute.js";
 import blogRoutes from "./src/routes/blogRoute.js";
 import enrollRoutes from "./src/routes/enrollmentRoute.js";
 import courseCategoryRoutes from "./src/routes/courseCategoryRoute.js";
+import assignmentRoutes from "./src/routes/assignment.routes.js";
+import submissionRoutes from "./src/routes/submission.routes.js";
 dotenv.config();
 const app = express();
 
@@ -44,6 +46,8 @@ app.use("/api/v1/contact", contactRoutes);
 app.use("/api/v1/blogs", blogRoutes);
 app.use("/api/v1/enrollment", enrollRoutes);
 app.use("/api/v1/course-category", courseCategoryRoutes);
+app.use("/api/v1/assignment", assignmentRoutes);
+app.use("/api/v1/submission", submissionRoutes);
 connectDB();
 
 const PORT = Number(process.env.PORT) || 8000;
